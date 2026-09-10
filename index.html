@@ -1,1551 +1,692 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  Users, Search, Plus, Calendar, Pin, Salad, MessageSquare, Package, ClipboardList,
-  AlertTriangle, ChevronRight, Eye, Play, X, Image as ImageIcon, Edit3, CheckCircle2,
-  XCircle, Filter, ArrowRight, Shield, RefreshCw, ChefHat, Sparkles, Sliders, Info, Volume2
-} from 'lucide-react';
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Kitchen Operations Hub</title>
+  <!-- Tailwind CSS CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Inter:wght@400;500;600;700&display=swap');
+    body { font-family: 'Inter', 'Cairo', sans-serif; }
+  </style>
+</head>
+<body class="bg-[#F8FAFC] text-[#1E293B] min-h-screen flex flex-col pb-24 selection:bg-emerald-500 selection:text-white">
 
-const INITIAL_STAFF = {
-  morning: [
-    { id: '1', name: 'Muhamed Mamdouh', role: 'Sous Chef', section: 'Hot' },
-    { id: '2', name: 'Mustafa Magdy', role: 'Chef de Partie', section: 'Cold' },
-    { id: '3', name: 'Muhamed Kamal', role: 'First Commis', section: 'Grill' },
-    { id: '4', name: 'Hadeer Muhamed', role: 'Demi Chef', section: 'Buffet' },
-    { id: '5', name: 'Muhamed Ahmed', role: 'Second Commis', section: 'Cold' },
-    { id: '6', name: 'Kareem Ashraf', role: 'First Commis', section: 'Hot' },
-    { id: '7', name: 'Sameh Sameer', role: 'Demi Chef', section: 'Grill' }
-  ],
-  afternoon: [
-    { id: '8', name: 'Islam Anwar', role: 'Chef de Partie', section: 'Hot' },
-    { id: '9', name: 'Eid Muhamed', role: 'First Commis', section: 'Grill' },
-    { id: '10', name: 'Taher Ahmed', role: 'Demi Chef', section: 'Cold' },
-    { id: '11', name: 'Hamdy Osama', role: 'Second Commis', section: 'Buffet' },
-    { id: '12', name: 'Ayman Salah', role: 'First Commis', section: 'Hot' },
-    { id: '13', name: 'Muhamed Mustafa', role: 'Chef de Partie', section: 'Grill' }
-  ],
-  night: [
-    { id: '14', name: 'Islam Muhamed', role: 'Chef de Partie', section: 'Hot' },
-    { id: '15', name: 'Hassan Ahmed', role: 'First Commis', section: 'Cold' },
-    { id: '16', name: 'Aashour', role: 'Demi Chef', section: 'Buffet' },
-    { id: '17', name: 'Islam Ahmed', role: 'Second Commis', section: 'Grill' }
-  ]
-};
+  <!-- 🚨 STICKY RED ALERT BANNER -->
+  <div class="sticky top-0 z-50 bg-red-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between animate-pulse">
+    <div class="flex items-center space-x-2 text-xs md:text-sm font-bold">
+      <i data-lucide="alert-triangle" class="w-5 h-5 text-yellow-300 shrink-0"></i>
+      <span>🚨 ACTIVE ALLERGY ALERT: Room 304 - Severe Peanut & Shellfish Allergy!</span>
+    </div>
+    <span class="bg-red-800 text-white text-[10px] font-semibold px-2 py-1 rounded uppercase tracking-wider hidden sm:inline-block">High Priority</span>
+  </div>
 
-const INITIAL_DUTIES = [
-  {
-    id: 'duty-1',
-    title: 'High Tea Stand',
-    type: 'High Tea',
-    image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=800',
-    description: 'Foccacia salmon sandwich pieces, tortilla stuffed with cream cheese and roasted beef, panini bread stuffed turkey, brown toast stuffed cheddar cheese',
-    basePerGuests: 0.2 // 1 stand per 5 guests
-  },
-  {
-    id: 'duty-2',
-    title: 'Executive Cheese Board',
-    type: 'Buffet',
-    image: 'https://images.unsplash.com/photo-1631379578550-7038263db699?auto=format&fit=crop&q=80&w=800',
-    description: 'Selection of Aged Cheddar, French Brie, Gouda, Blue Cheese, Crackers, Dried Figs, Grapes & Nuts',
-    basePerGuests: 0.1 // 1 board per 10 guests
-  },
-  {
-    id: 'duty-3',
-    title: 'Classic Caesar Salad',
-    type: 'Set Menu',
-    image: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&q=80&w=800',
-    description: 'Crisp Romaine lettuce, shaved Parmesan, garlic herb croutons, poached chicken breast & house Caesar dressing',
-    basePerGuests: 1 // 1 salad per guest
-  },
-  {
-    id: 'duty-4',
-    title: 'Gourmet Breakfast Box',
-    type: 'Breakfast Boxes',
-    image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=800',
-    description: 'Box contains apple, banana, jam & honey portion, croissant, danish, rolls and mini sandwich',
-    basePerGuests: 1 // 1 box per guest
-  }
-];
-
-const INVENTORY_DATA = {
-  storage: [
-    { id: 'i1', name: 'Panini Bread', qty: '40 loaves', expiry: '2026-09-15', status: 'yellow', allergens: ['Gluten'] },
-    { id: 'i2', name: 'Brown Toast', qty: '15 packs', expiry: '2026-09-11', status: 'yellow', allergens: ['Gluten'] },
-    { id: 'i3', name: 'Crackers & Biscuits', qty: '8 boxes', expiry: '2026-10-20', status: 'green', allergens: ['Gluten'] },
-    { id: 'i4', name: 'Honey & Jam Portions', qty: '120 pcs', expiry: '2026-12-01', status: 'green', allergens: [] }
-  ],
-  fridge: [
-    { id: 'i5', name: 'Smoked Salmon Slices', qty: '2.5 kg', expiry: '2026-09-10', status: 'red', allergens: ['Fish'] },
-    { id: 'i6', name: 'Cream Cheese', qty: '4 kg', expiry: '2026-09-12', status: 'yellow', allergens: ['Dairy'] },
-    { id: 'i7', name: 'Sliced Roast Beef', qty: '3.8 kg', expiry: '2026-09-14', status: 'yellow', allergens: [] },
-    { id: 'i8', name: 'Aged Cheddar & Brie', qty: '6.0 kg', expiry: '2026-09-18', status: 'green', allergens: ['Dairy'] },
-    { id: 'i9', name: 'Sous-vide Chicken Breast', qty: '8.5 kg', expiry: '2026-09-11', status: 'yellow', allergens: [] }
-  ],
-  freezer: [
-    { id: 'i10', name: 'Croissants & Danish Dough', qty: '200 pcs', expiry: '2026-10-15', status: 'green', allergens: ['Gluten', 'Dairy'] },
-    { id: 'i11', name: 'Sliced Bacon', qty: '12 kg', expiry: '2026-11-01', status: 'green', allergens: [] },
-    { id: 'i12', name: 'Ice Cream Base', qty: '5 tubs', expiry: '2026-09-10', status: 'red', allergens: ['Dairy', 'Nuts'] }
-  ]
-};
-
-const INITIAL_HANDOVERS = {
-  complaints: [
-    { id: 'h1', text: 'Room 210 reported Caesar Salad dressing was slightly over-salted.', time: '14:20', chef: 'Islam A.' },
-    { id: 'h2', text: 'Guest in Main Dining requested extra crispy bacon on club sandwich.', time: '12:15', chef: 'Mustafa M.' }
-  ],
-  mistakes: [
-    { id: 'h3', text: 'Burned 1 batch of panini bread during afternoon rush prep.', time: '15:45', chef: 'Hamdy O.' }
-  ],
-  requests: [
-    { id: 'h4', text: 'VIP Table 4 requested gluten-free rolls for tomorrow morning high tea.', time: '16:00', chef: 'Muhamed M.' },
-    { id: 'h5', text: 'Prepare 15 extra takeaway breakfast boxes for early flight departure at 06:00 AM.', time: '17:30', chef: 'Taher A.' }
-  ]
-};
-
-export default function App() {
-  const [activeTab, setActiveTab] = useState('schedule');
-  const [staffData, setStaffData] = useState(INITIAL_STAFF);
-  const [searchQuery, setSearchQuery] = useState('');
-  
-  // Custom Image URLs for editable photo cards
-  const [dutyCards, setDutyCards] = useState(INITIAL_DUTIES);
-  const [clubSandwichImage, setClubSandwichImage] = useState('https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&q=80&w=800');
-  const [editingImageKey, setEditingImageKey] = useState(null);
-  const [tempImageUrl, setTempImageUrl] = useState('');
-
-  // Modals state
-  const [modalContent, setModalContent] = useState(null); // { title, type: 'photo'|'video'|'edit_image', url }
-
-  // Daily Duties calculator
-  const [guestCount, setGuestCount] = useState(10);
-
-  // SOP Subtab
-  const [sopSubTab, setSopSubTab] = useState('morning');
-
-  // Feedback State
-  const [feedbackType, setFeedbackType] = useState('good');
-  const [selectedIssues, setSelectedIssues] = useState([]);
-  const [selectedEquipment, setSelectedEquipment] = useState('');
-  const [isAnonymous, setIsAnonymous] = useState(false);
-  const [feedbackComment, setFeedbackComment] = useState('');
-  const [feedbackLogs, setFeedbackLogs] = useState([
-    { id: 1, type: 'good', issues: [], comment: 'Morning shift ran very smooth. All prep finished 30 mins early!', time: '11:30 AM', chef: 'Muhamed Mamdouh' },
-    { id: 2, type: 'bad', issues: ['Equipment & Tools'], equipment: 'Grill Unit #2 - Temperature fluctuation', comment: 'Heating element inconsistent.', time: '03:15 PM', chef: 'Anonymous' }
-  ]);
-
-  // Inventory State
-  const [inventoryTab, setInventoryTab] = useState('fridge');
-  const [inventory, setInventory] = useState(INVENTORY_DATA);
-  const [newItemName, setNewItemName] = useState('');
-  const [newItemQty, setNewItemQty] = useState('');
-  const [newItemExpiry, setNewItemExpiry] = useState('');
-  const [newItemAllergens, setNewItemAllergens] = useState('');
-
-  // Handover state
-  const [handovers, setHandovers] = useState(INITIAL_HANDOVERS);
-  const [newNoteText, setNewNoteText] = useState('');
-  const [newNoteCategory, setNewNoteCategory] = useState('complaints');
-
-  const getSectionBadgeColor = (section) => {
-    switch (section) {
-      case 'Cold': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'Hot': return 'bg-red-100 text-red-800 border-red-200';
-      case 'Grill': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'Buffet': return 'bg-amber-100 text-amber-800 border-amber-200';
-      default: return 'bg-slate-100 text-slate-800 border-slate-200';
-    }
-  };
-
-  const handleDragStart = (e, staffId, sourceShift) => {
-    e.dataTransfer.setData('staffId', staffId);
-    e.dataTransfer.setData('sourceShift', sourceShift);
-  };
-
-  const handleDragOver = (e) => {
-    e.preventDefault();
-  };
-
-  const handleDrop = (e, targetShift) => {
-    e.preventDefault();
-    const staffId = e.dataTransfer.getData('staffId');
-    const sourceShift = e.dataTransfer.getData('sourceShift');
-
-    if (!staffId || !sourceShift || sourceShift === targetShift) return;
-
-    let movedStaffMember = null;
-    const newSourceList = staffData[sourceShift].filter((member) => {
-      if (member.id === staffId) {
-        movedStaffMember = member;
-        return false;
-      }
-      return true;
-    });
-
-    if (movedStaffMember) {
-      setStaffData({
-        ...staffData,
-        [sourceShift]: newSourceList,
-        [targetShift]: [...staffData[targetShift], movedStaffMember]
-      });
-    }
-  };
-
-  const moveStaffQuick = (staffId, sourceShift, targetShift) => {
-    let movedStaffMember = null;
-    const newSourceList = staffData[sourceShift].filter((member) => {
-      if (member.id === staffId) {
-        movedStaffMember = member;
-        return false;
-      }
-      return true;
-    });
-
-    if (movedStaffMember) {
-      setStaffData({
-        ...staffData,
-        [sourceShift]: newSourceList,
-        [targetShift]: [...staffData[targetShift], movedStaffMember]
-      });
-    }
-  };
-
-  // Image Customizer trigger
-  const openImageEditor = (key, currentUrl) => {
-    setEditingImageKey(key);
-    setTempImageUrl(currentUrl);
-    setModalContent({ type: 'edit_image' });
-  };
-
-  const saveCustomImage = () => {
-    if (!tempImageUrl.trim()) return;
-    if (editingImageKey === 'clubSandwich') {
-      setClubSandwichImage(tempImageUrl);
-    } else if (editingImageKey.startsWith('duty-')) {
-      setDutyCards(dutyCards.map(d => d.id === editingImageKey ? { ...d, image: tempImageUrl } : d));
-    }
-    setModalContent(null);
-    setEditingImageKey(null);
-  };
-
-  // Total staff count
-  const totalStaffCount = staffData.morning.length + staffData.afternoon.length + staffData.night.length;
-
-  // Filter staff by search query
-  const filterStaff = (list) => {
-    if (!searchQuery.trim()) return list;
-    const q = searchQuery.toLowerCase();
-    return list.filter(s => 
-      s.name.toLowerCase().includes(q) || 
-      s.role.toLowerCase().includes(q) || 
-      s.section.toLowerCase().includes(q)
-    );
-  };
-
-  // Add Feedback
-  const handleFeedbackSubmit = (e) => {
-    e.preventDefault();
-    const newEntry = {
-      id: Date.now(),
-      type: feedbackType,
-      issues: feedbackType === 'bad' ? selectedIssues : [],
-      equipment: feedbackType === 'bad' && selectedIssues.includes('Equipment & Tools') ? selectedEquipment : '',
-      comment: feedbackComment,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      chef: isAnonymous ? 'Anonymous' : 'Shift Lead'
-    };
-    setFeedbackLogs([newEntry, ...feedbackLogs]);
-    setFeedbackComment('');
-    setSelectedIssues([]);
-    setSelectedEquipment('');
-  };
-
-  // Add Handover
-  const handleAddHandover = (e) => {
-    e.preventDefault();
-    if (!newNoteText.trim()) return;
-    const item = {
-      id: 'h-' + Date.now(),
-      text: newNoteText,
-      time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-      chef: 'Executive Duty Chef'
-    };
-    setHandovers({
-      ...handovers,
-      [newNoteCategory]: [item, ...handovers[newNoteCategory]]
-    });
-    setNewNoteText('');
-  };
-
-  // Add Inventory Item
-  const handleAddInventory = (e) => {
-    e.preventDefault();
-    if (!newItemName || !newItemQty || !newItemExpiry) return;
-    
-    // Auto status determination
-    const expDate = new Date(newItemExpiry);
-    const today = new Date();
-    const diffDays = Math.ceil((expDate - today) / (1000 * 60 * 60 * 24));
-    let status = 'green';
-    if (diffDays <= 1) status = 'red';
-    else if (diffDays <= 7) status = 'yellow';
-
-    const item = {
-      id: 'inv-' + Date.now(),
-      name: newItemName,
-      qty: newItemQty,
-      expiry: newItemExpiry,
-      status: status,
-      allergens: newItemAllergens ? newItemAllergens.split(',').map(s => s.trim()) : []
-    };
-
-    setInventory({
-      ...inventory,
-      [inventoryTab]: [...inventory[inventoryTab], item]
-    });
-
-    setNewItemName('');
-    setNewItemQty('');
-    setNewItemExpiry('');
-    setNewItemAllergens('');
-  };
-
-  return (
-    <div className="min-h-screen bg-[#F8FAFC] text-[#1E293B] pb-24 flex flex-col font-sans select-none">
-      
-      {/* 🚨 STICKY RED ALERT BANNER FOR SEVERE ALLERGIES */}
-      <div className="sticky top-0 z-40 bg-red-600 text-white px-4 py-2.5 shadow-md flex items-center justify-between animate-pulse">
-        <div className="flex items-center space-x-2 text-sm md:text-base font-bold">
-          <AlertTriangle className="w-5 h-5 flex-shrink-0 text-yellow-300" />
-          <span>🚨 ACTIVE ALLERGY ALERT: Room 304 - Severe Peanut & Shellfish Allergy!</span>
-        </div>
-        <span className="bg-red-800 text-white text-xs font-semibold px-2 py-1 rounded uppercase tracking-wider hidden sm:inline-block">
-          High Priority
-        </span>
+  <!-- HEADER -->
+  <header class="bg-white border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
+    <div class="flex items-center space-x-3">
+      <div class="bg-emerald-600 text-white p-2 rounded-xl shadow-sm">
+        <i data-lucide="chef-hat" class="w-6 h-6"></i>
       </div>
-
-      {/* HEADER BAR */}
-      <header className="bg-white border-b border-slate-200 px-4 py-3 shadow-sm flex items-center justify-between">
-        <div className="flex items-center space-x-3">
-          <div className="bg-emerald-600 text-white p-2 rounded-xl shadow-sm">
-            <ChefHat className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="font-extrabold text-lg md:text-xl text-slate-800 tracking-tight leading-none">
-              Kitchen Operations Hub
-            </h1>
-            <p className="text-xs text-slate-500 font-medium mt-0.5">Live Shift Management & SOPs</p>
-          </div>
-        </div>
-
-        <div className="flex items-center space-x-2">
-          <div className="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center space-x-2 text-xs font-semibold text-slate-700">
-            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
-            <span>Kitchen Live</span>
-          </div>
-        </div>
-      </header>
-
-      {/* MAIN CONTENT AREA */}
-      <main className="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5">
-
-        {/* -------------------------------------------------------------
-            MODULE 1: SCHEDULE (DEFAULT VIEW)
-        ------------------------------------------------------------- */}
-        {activeTab === 'schedule' && (
-          <div className="space-y-5">
-            {/* Top Metrics Bar */}
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-              <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
-                <div className="p-3 bg-slate-100 text-slate-800 rounded-lg">
-                  <Users className="w-6 h-6" />
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-slate-800">{totalStaffCount}</div>
-                  <div className="text-xs font-bold text-slate-500 uppercase tracking-wide">Total Staff</div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-amber-200 bg-amber-50/30 shadow-sm flex items-center space-x-3">
-                <div className="p-3 bg-amber-100 text-amber-800 rounded-lg">
-                  <span className="text-lg">🌅</span>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-amber-900">{staffData.morning.length}</div>
-                  <div className="text-xs font-bold text-amber-700 uppercase tracking-wide">Morning Shift</div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-orange-200 bg-orange-50/30 shadow-sm flex items-center space-x-3">
-                <div className="p-3 bg-orange-100 text-orange-800 rounded-lg">
-                  <span className="text-lg">☀️</span>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-orange-900">{staffData.afternoon.length}</div>
-                  <div className="text-xs font-bold text-orange-700 uppercase tracking-wide">Afternoon Shift</div>
-                </div>
-              </div>
-
-              <div className="bg-white p-4 rounded-xl border border-indigo-200 bg-indigo-50/30 shadow-sm flex items-center space-x-3">
-                <div className="p-3 bg-indigo-100 text-indigo-800 rounded-lg">
-                  <span className="text-lg">🌙</span>
-                </div>
-                <div>
-                  <div className="text-2xl font-black text-indigo-900">{staffData.night.length}</div>
-                  <div className="text-xs font-bold text-indigo-700 uppercase tracking-wide">Night Shift</div>
-                </div>
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="relative">
-              <Search className="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                type="text"
-                placeholder="Search staff by Name, Job Title, or Section (Hot, Cold, Grill, Buffet)..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm text-sm md:text-base"
-              />
-              {searchQuery && (
-                <button 
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-slate-500 hover:text-slate-800 bg-slate-100 px-2 py-1 rounded"
-                >
-                  Clear
-                </button>
-              )}
-            </div>
-
-            {/* Shift Columns / Droppable Containers */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              {/* MORNING SHIFT */}
-              <div 
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, 'morning')}
-                className="bg-white rounded-2xl border-2 border-amber-200 p-4 shadow-sm flex flex-col min-h-[420px]"
-              >
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-amber-100">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl">🌅</span>
-                    <h3 className="font-bold text-slate-800 text-base">Morning Shift</h3>
-                  </div>
-                  <span className="bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
-                    {filterStaff(staffData.morning).length} Staff
-                  </span>
-                </div>
-
-                <div className="flex-1 space-y-2.5">
-                  {filterStaff(staffData.morning).map((staff) => (
-                    <div
-                      key={staff.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, staff.id, 'morning')}
-                      className="p-3 bg-slate-50 hover:bg-amber-50/50 border border-slate-200 hover:border-amber-300 rounded-xl transition cursor-grab active:cursor-grabbing shadow-xs group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-bold text-slate-800 text-sm">{staff.name}</div>
-                          <div className="text-xs text-slate-500 font-medium">{staff.role}</div>
-                        </div>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getSectionBadgeColor(staff.section)}`}>
-                          {staff.section}
-                        </span>
-                      </div>
-                      
-                      {/* Mobile move controls */}
-                      <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-end space-x-1 opacity-90 md:opacity-0 group-hover:opacity-100 transition">
-                        <span className="text-[10px] text-slate-400 font-semibold mr-auto">Move to:</span>
-                        <button
-                          onClick={() => moveStaffQuick(staff.id, 'morning', 'afternoon')}
-                          className="text-[10px] font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 px-2 py-0.5 rounded"
-                        >
-                          ☀️ After
-                        </button>
-                        <button
-                          onClick={() => moveStaffQuick(staff.id, 'morning', 'night')}
-                          className="text-[10px] font-bold bg-indigo-100 text-indigo-800 hover:bg-indigo-200 px-2 py-0.5 rounded"
-                        >
-                          🌙 Night
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {filterStaff(staffData.morning).length === 0 && (
-                    <div className="h-32 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-medium">
-                      Drag staff here
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* AFTERNOON SHIFT */}
-              <div 
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, 'afternoon')}
-                className="bg-white rounded-2xl border-2 border-orange-200 p-4 shadow-sm flex flex-col min-h-[420px]"
-              >
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-orange-100">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl">☀️</span>
-                    <h3 className="font-bold text-slate-800 text-base">Afternoon Shift</h3>
-                  </div>
-                  <span className="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
-                    {filterStaff(staffData.afternoon).length} Staff
-                  </span>
-                </div>
-
-                <div className="flex-1 space-y-2.5">
-                  {filterStaff(staffData.afternoon).map((staff) => (
-                    <div
-                      key={staff.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, staff.id, 'afternoon')}
-                      className="p-3 bg-slate-50 hover:bg-orange-50/50 border border-slate-200 hover:border-orange-300 rounded-xl transition cursor-grab active:cursor-grabbing shadow-xs group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-bold text-slate-800 text-sm">{staff.name}</div>
-                          <div className="text-xs text-slate-500 font-medium">{staff.role}</div>
-                        </div>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getSectionBadgeColor(staff.section)}`}>
-                          {staff.section}
-                        </span>
-                      </div>
-
-                      {/* Mobile move controls */}
-                      <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-end space-x-1 opacity-90 md:opacity-0 group-hover:opacity-100 transition">
-                        <span className="text-[10px] text-slate-400 font-semibold mr-auto">Move to:</span>
-                        <button
-                          onClick={() => moveStaffQuick(staff.id, 'afternoon', 'morning')}
-                          className="text-[10px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 px-2 py-0.5 rounded"
-                        >
-                          🌅 Morn
-                        </button>
-                        <button
-                          onClick={() => moveStaffQuick(staff.id, 'afternoon', 'night')}
-                          className="text-[10px] font-bold bg-indigo-100 text-indigo-800 hover:bg-indigo-200 px-2 py-0.5 rounded"
-                        >
-                          🌙 Night
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {filterStaff(staffData.afternoon).length === 0 && (
-                    <div className="h-32 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-medium">
-                      Drag staff here
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              {/* NIGHT SHIFT */}
-              <div 
-                onDragOver={handleDragOver}
-                onDrop={(e) => handleDrop(e, 'night')}
-                className="bg-white rounded-2xl border-2 border-indigo-200 p-4 shadow-sm flex flex-col min-h-[420px]"
-              >
-                <div className="flex items-center justify-between pb-3 mb-3 border-b border-indigo-100">
-                  <div className="flex items-center space-x-2">
-                    <span className="text-2xl">🌙</span>
-                    <h3 className="font-bold text-slate-800 text-base">Night Shift</h3>
-                  </div>
-                  <span className="bg-indigo-100 text-indigo-800 text-xs font-extrabold px-2.5 py-1 rounded-full">
-                    {filterStaff(staffData.night).length} Staff
-                  </span>
-                </div>
-
-                <div className="flex-1 space-y-2.5">
-                  {filterStaff(staffData.night).map((staff) => (
-                    <div
-                      key={staff.id}
-                      draggable
-                      onDragStart={(e) => handleDragStart(e, staff.id, 'night')}
-                      className="p-3 bg-slate-50 hover:bg-indigo-50/50 border border-slate-200 hover:border-indigo-300 rounded-xl transition cursor-grab active:cursor-grabbing shadow-xs group"
-                    >
-                      <div className="flex items-start justify-between">
-                        <div>
-                          <div className="font-bold text-slate-800 text-sm">{staff.name}</div>
-                          <div className="text-xs text-slate-500 font-medium">{staff.role}</div>
-                        </div>
-                        <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full border ${getSectionBadgeColor(staff.section)}`}>
-                          {staff.section}
-                        </span>
-                      </div>
-
-                      {/* Mobile move controls */}
-                      <div className="mt-2 pt-2 border-t border-slate-200/60 flex items-center justify-end space-x-1 opacity-90 md:opacity-0 group-hover:opacity-100 transition">
-                        <span className="text-[10px] text-slate-400 font-semibold mr-auto">Move to:</span>
-                        <button
-                          onClick={() => moveStaffQuick(staff.id, 'night', 'morning')}
-                          className="text-[10px] font-bold bg-amber-100 text-amber-800 hover:bg-amber-200 px-2 py-0.5 rounded"
-                        >
-                          🌅 Morn
-                        </button>
-                        <button
-                          onClick={() => moveStaffQuick(staff.id, 'night', 'afternoon')}
-                          className="text-[10px] font-bold bg-orange-100 text-orange-800 hover:bg-orange-200 px-2 py-0.5 rounded"
-                        >
-                          ☀️ After
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                  {filterStaff(staffData.night).length === 0 && (
-                    <div className="h-32 border-2 border-dashed border-slate-200 rounded-xl flex items-center justify-center text-slate-400 text-xs font-medium">
-                      Drag staff here
-                    </div>
-                  )}
-                </div>
-              </div>
-
-            </div>
-          </div>
-        )}
-
-        {/* -------------------------------------------------------------
-            MODULE 2: DAILY DUTIES
-        ------------------------------------------------------------- */}
-        {activeTab === 'duties' && (
-          <div className="space-y-6">
-            
-            {/* Dynamic Headcount Calculator */}
-            <div className="bg-gradient-to-r from-emerald-600 to-teal-700 rounded-2xl p-5 text-white shadow-md">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-xl font-black flex items-center space-x-2">
-                    <Sparkles className="w-5 h-5 text-yellow-300" />
-                    <span>Dynamic Prep & Equipment Calculator</span>
-                  </h2>
-                  <p className="text-xs md:text-sm text-emerald-100 mt-1">
-                    Enter forecasted guest headcount to automatically scale tier stands, cheese boards & portion quantities.
-                  </p>
-                </div>
-
-                <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3 rounded-xl flex items-center space-x-3">
-                  <label className="text-xs font-bold uppercase tracking-wider text-emerald-100 whitespace-nowrap">
-                    Guest Count:
-                  </label>
-                  <input
-                    type="number"
-                    min="1"
-                    max="500"
-                    value={guestCount}
-                    onChange={(e) => setGuestCount(Math.max(1, parseInt(e.target.value) || 1))}
-                    className="w-24 bg-white text-slate-900 font-extrabold text-lg px-3 py-1.5 rounded-lg text-center shadow-inner focus:outline-none"
-                  />
-                  <span className="text-sm font-bold text-emerald-100">Guests</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Visual Duty Presentation Cards */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-              {dutyCards.map((duty) => {
-                const scaledUnits = Math.ceil(guestCount * duty.basePerGuests);
-                return (
-                  <div key={duty.id} className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm hover:shadow-md transition flex flex-col">
-                    <div className="relative h-48 sm:h-56 overflow-hidden bg-slate-100 group">
-                      <img 
-                        src={duty.image} 
-                        alt={duty.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition duration-500"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 via-black/20 to-transparent"></div>
-                      <span className="absolute top-3 left-3 bg-white/90 backdrop-blur-md text-slate-800 text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                        📌 {duty.type}
-                      </span>
-                      
-                      {/* Image Editor Trigger */}
-                      <button
-                        onClick={() => openImageEditor(duty.id, duty.image)}
-                        className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-md transition shadow-md"
-                        title="Change / Edit Image URL"
-                      >
-                        <Edit3 className="w-4 h-4" />
-                      </button>
-
-                      <div className="absolute bottom-3 left-3 right-3 text-white">
-                        <h3 className="font-extrabold text-lg drop-shadow-sm">{duty.title}</h3>
-                        <div className="flex items-center space-x-2 text-xs font-semibold text-emerald-300">
-                          <span>Required for {guestCount} guests:</span>
-                          <span className="bg-emerald-500 text-white font-black px-2 py-0.5 rounded text-sm">
-                            {scaledUnits} {duty.type === 'High Tea' ? 'Tier Stands' : duty.type === 'Buffet' ? 'Boards' : 'Portions'}
-                          </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="p-4 flex-1 flex flex-col justify-between">
-                      <div>
-                        <div className="text-xs font-bold uppercase text-slate-400 tracking-wider mb-1">Detailed Ingredients & Composition</div>
-                        <p className="text-sm text-slate-700 leading-relaxed font-medium">
-                          {duty.description}
-                        </p>
-                      </div>
-
-                      <div className="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500 font-semibold">
-                        <span>Scaled ratio: {(duty.basePerGuests * 10).toFixed(1)} per 10 guests</span>
-                        <span className="text-emerald-700 font-bold bg-emerald-50 px-2.5 py-1 rounded-md">Verified SOP</span>
-                      </div>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-          </div>
-        )}
-
-        {/* -------------------------------------------------------------
-            MODULE 3: SOPs / SHIFT OPERATIONS
-        ------------------------------------------------------------- */}
-        {activeTab === 'sops' && (
-          <div className="space-y-5">
-            
-            {/* Interactive Shift Sub-tabs */}
-            <div className="flex bg-slate-200 p-1 rounded-xl max-w-md mx-auto">
-              <button
-                onClick={() => setSopSubTab('morning')}
-                className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition ${
-                  sopSubTab === 'morning' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🌅 Morning (Mise en Place)
-              </button>
-              <button
-                onClick={() => setSopSubTab('afternoon')}
-                className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition ${
-                  sopSubTab === 'afternoon' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                ☀️ Afternoon (Plating)
-              </button>
-              <button
-                onClick={() => setSopSubTab('night')}
-                className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition ${
-                  sopSubTab === 'night' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🌙 Night (Buffet Prep)
-              </button>
-            </div>
-
-            {/* MORNING SOP CONTENT */}
-            {sopSubTab === 'morning' && (
-              <div className="space-y-4">
-                
-                {/* Item Card with Image */}
-                <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-                  <div className="relative h-56 bg-slate-100">
-                    <img src={clubSandwichImage} alt="Club Sandwich SOP" className="w-full h-full object-cover" />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent"></div>
-                    
-                    <button
-                      onClick={() => openImageEditor('clubSandwich', clubSandwichImage)}
-                      className="absolute top-3 right-3 bg-black/60 hover:bg-black/80 text-white p-2 rounded-full backdrop-blur-md transition"
-                      title="Edit Image Link"
-                    >
-                      <Edit3 className="w-4 h-4" />
-                    </button>
-
-                    <div className="absolute bottom-4 left-4 text-white">
-                      <span className="bg-emerald-500 text-white text-xs font-black px-2.5 py-1 rounded uppercase tracking-wider mb-2 inline-block">
-                        Featured Recipe
-                      </span>
-                      <h2 className="text-2xl font-black">Signature Club Sandwich Prep</h2>
-                      <p className="text-xs text-slate-200 font-medium mt-0.5">Mise en place standards & precise ratios</p>
-                    </div>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  {/* Dressing Recipe Card */}
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <div className="flex items-center justify-between mb-3">
-                        <h3 className="font-extrabold text-slate-800 text-base flex items-center space-x-2">
-                          <Salad className="w-5 h-5 text-emerald-600" />
-                          <span>Club Sandwich Dressing Recipe</span>
-                        </h3>
-                      </div>
-                      <ul className="space-y-2 text-sm text-slate-700 font-medium bg-slate-50 p-3.5 rounded-xl border border-slate-100">
-                        <li className="flex items-center justify-between"><span>Mayonnaise:</span> <span className="font-bold text-slate-900">500g</span></li>
-                        <li className="flex items-center justify-between"><span>Dijon Mustard:</span> <span className="font-bold text-slate-900">30g</span></li>
-                        <li className="flex items-center justify-between"><span>Fresh Lemon Juice:</span> <span className="font-bold text-slate-900">5 ml</span></li>
-                        <li className="flex items-center justify-between"><span>Seasoning:</span> <span className="font-bold text-slate-900">Pinch of sea salt & cracked black pepper</span></li>
-                      </ul>
-                    </div>
-
-                    <div className="mt-4 flex items-center space-x-2">
-                      <button 
-                        onClick={() => setModalContent({ title: 'Club Sandwich Dressing Prep', type: 'photo', url: clubSandwichImage })}
-                        className="flex-1 bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition"
-                      >
-                        <ImageIcon className="w-4 h-4 text-slate-600" />
-                        <span>View Photo</span>
-                      </button>
-                      <button 
-                        onClick={() => setModalContent({ title: 'Dressing Emulsification Video SOP', type: 'video', url: 'https://www.youtube.com/embed/dQw4w9WgXcQ' })}
-                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition shadow-sm"
-                      >
-                        <Play className="w-4 h-4 fill-white" />
-                        <span>Prep Video</span>
-                      </button>
-                    </div>
-                  </div>
-
-                  {/* Protein Prep Card */}
-                  <div className="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col justify-between">
-                    <div>
-                      <h3 className="font-extrabold text-slate-800 text-base mb-3 flex items-center space-x-2">
-                        <Shield className="w-5 h-5 text-amber-600" />
-                        <span>Protein Prep & Temp Specs</span>
-                      </h3>
-                      <div className="bg-amber-50 border border-amber-200 p-4 rounded-xl space-y-2 text-sm text-amber-900">
-                        <p className="font-bold">Sous-vide Chicken Breast Guidelines:</p>
-                        <p className="text-xs leading-relaxed">
-                          Cook chicken breast sous-vide precisely at <span className="font-extrabold text-amber-950 bg-amber-200 px-1 rounded">65°C for 4 hours</span>.
-                        </p>
-                        <div className="pt-2 border-t border-amber-200 text-xs font-semibold">
-                          Slicing Spec: Slice precisely at <span className="font-black text-amber-950">4mm thickness</span> across the grain.
-                        </div>
-                      </div>
-                    </div>
-
-                    <div className="mt-4">
-                      <button 
-                        onClick={() => setModalContent({ title: 'Sous-vide Chicken Temperature Check', type: 'photo', url: 'https://images.unsplash.com/photo-1532550907401-a500c9a57435?auto=format&fit=crop&q=80&w=800' })}
-                        className="w-full bg-slate-100 hover:bg-slate-200 text-slate-800 font-bold text-xs py-2.5 px-3 rounded-xl flex items-center justify-center space-x-1.5 transition"
-                      >
-                        <ImageIcon className="w-4 h-4 text-slate-600" />
-                        <span>View Temperature Log SOP</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-              </div>
-            )}
-
-            {/* AFTERNOON SOP CONTENT */}
-            {sopSubTab === 'afternoon' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-5">
-                <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-                  <div>
-                    <h2 className="text-lg font-black text-slate-800">Club Sandwich Plating & Presentation Assembly</h2>
-                    <p className="text-xs text-slate-500">3-Step Precision Standard</p>
-                  </div>
-                  <button
-                    onClick={() => setModalContent({ title: 'Final Plating Presentation', type: 'photo', url: clubSandwichImage })}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-3 py-2 rounded-xl flex items-center space-x-1.5 shadow-sm transition"
-                  >
-                    <ImageIcon className="w-4 h-4" />
-                    <span>Plating Photo</span>
-                  </button>
-                </div>
-
-                <div className="space-y-4">
-                  {/* Step 1 */}
-                  <div className="flex items-start space-x-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <span className="bg-emerald-600 text-white font-black text-xs px-2.5 py-1 rounded-lg flex-shrink-0">
-                      STEP 1
-                    </span>
-                    <div>
-                      <h4 className="font-extrabold text-slate-800 text-sm">Toasting Bread</h4>
-                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        Toast 3 slices of white toast bread to golden brown. Lightly spread the prepared dressing evenly on each slice.
-                      </p>
-                    </div>
-                  </div>
-
-                  {/* Step 2 */}
-                  <div className="flex items-start space-x-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <span className="bg-emerald-600 text-white font-black text-xs px-2.5 py-1 rounded-lg flex-shrink-0">
-                      STEP 2
-                    </span>
-                    <div>
-                      <h4 className="font-extrabold text-slate-800 text-sm">Layering Ingredients</h4>
-                      <div className="text-xs text-slate-600 mt-1 space-y-1">
-                        <p><strong className="text-slate-800">Layer 1:</strong> Iceberg lettuce, 4 sliced tomatoes, 1 slice cheddar cheese, and 2 slices grilled bacon.</p>
-                        <p><strong className="text-slate-800">Layer 2:</strong> 4 sous-vide chicken breast slices (4mm) and fresh omelette.</p>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Step 3 */}
-                  <div className="flex items-start space-x-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <span className="bg-emerald-600 text-white font-black text-xs px-2.5 py-1 rounded-lg flex-shrink-0">
-                      STEP 3
-                    </span>
-                    <div>
-                      <h4 className="font-extrabold text-slate-800 text-sm">Pressing, Cutting & Service Presentation</h4>
-                      <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                        After pressing lightly on the sandwich maker, trim all crusts cleanly. Cut in half diagonally, then cut into <strong className="text-slate-800">4 equal triangles</strong>. Secure with skewers and serve with olives & iceberg lettuce with 1 cherry tomato in master pots.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* NIGHT SOP CONTENT */}
-            {sopSubTab === 'night' && (
-              <div className="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
-                <h2 className="text-lg font-black text-slate-800">Breakfast Buffet Night Setup Standards</h2>
-                <p className="text-xs text-slate-500">Overnight guidelines for morning launch</p>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 className="font-bold text-slate-800 text-sm mb-2">1. Cold Cuts & Cheese Chilling</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Pre-slice cheddar, brie, and gouda cheeses. Store in airtight gastro trays at &lt; 4°C with parchment dividers.
-                    </p>
-                  </div>
-                  <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-                    <h4 className="font-bold text-slate-800 text-sm mb-2">2. Bakery Proofing Schedule</h4>
-                    <p className="text-xs text-slate-600 leading-relaxed">
-                      Pull frozen croissants and danishes from freezer to retarder at 03:00 AM. Bake precisely at 05:30 AM.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            )}
-
-          </div>
-        )}
-
-        {/* -------------------------------------------------------------
-            MODULE 4: SHIFT FEEDBACK
-        ------------------------------------------------------------- */}
-        {activeTab === 'feedback' && (
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-            
-            {/* Feedback Input Form */}
-            <div className="lg:col-span-1 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h2 className="text-lg font-black text-slate-800">Submit Shift Quality Feedback</h2>
-              
-              <form onSubmit={handleFeedbackSubmit} className="space-y-4">
-                {/* Good or Bad status */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-2">Shift Performance</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setFeedbackType('good')}
-                      className={`p-3 rounded-xl border font-extrabold text-sm flex items-center justify-center space-x-2 transition ${
-                        feedbackType === 'good' 
-                          ? 'bg-emerald-500 text-white border-emerald-600 shadow-sm' 
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      <CheckCircle2 className="w-5 h-5" />
-                      <span>Good Shift</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setFeedbackType('bad')}
-                      className={`p-3 rounded-xl border font-extrabold text-sm flex items-center justify-center space-x-2 transition ${
-                        feedbackType === 'bad' 
-                          ? 'bg-rose-500 text-white border-rose-600 shadow-sm' 
-                          : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                      }`}
-                    >
-                      <XCircle className="w-5 h-5" />
-                      <span>Issues Occurred</span>
-                    </button>
-                  </div>
-                </div>
-
-                {/* Bad Shift Issue Chips & Equipment Dropdown */}
-                {feedbackType === 'bad' && (
-                  <div className="space-y-3 bg-rose-50 p-3.5 rounded-xl border border-rose-200 animate-fadeIn">
-                    <label className="text-xs font-bold text-rose-900 uppercase tracking-wider block">Select Issue Chips:</label>
-                    <div className="flex flex-wrap gap-2">
-                      {['Shift Issue', 'Overtime', 'Equipment & Tools'].map((chip) => {
-                        const isSel = selectedIssues.includes(chip);
-                        return (
-                          <button
-                            key={chip}
-                            type="button"
-                            onClick={() => {
-                              if (isSel) setSelectedIssues(selectedIssues.filter(i => i !== chip));
-                              else setSelectedIssues([...selectedIssues, chip]);
-                            }}
-                            className={`text-xs font-bold px-3 py-1.5 rounded-lg border transition ${
-                              isSel 
-                                ? 'bg-rose-600 text-white border-rose-700' 
-                                : 'bg-white text-rose-800 border-rose-300 hover:bg-rose-100'
-                            }`}
-                          >
-                            {chip}
-                          </button>
-                        );
-                      })}
-                    </div>
-
-                    {selectedIssues.includes('Equipment & Tools') && (
-                      <div className="mt-2">
-                        <label className="text-xs font-bold text-rose-900 block mb-1">Equipment Issue Dropdown:</label>
-                        <select
-                          value={selectedEquipment}
-                          onChange={(e) => setSelectedEquipment(e.target.value)}
-                          className="w-full bg-white border border-rose-300 rounded-lg p-2 text-xs font-bold text-slate-800 focus:outline-none"
-                        >
-                          <option value="">Select Equipment...</option>
-                          <option value="Grill Unit #1 - Heating failure">Grill Unit #1 - Heating failure</option>
-                          <option value="Walk-in Fridge #2 - Temp spike">Walk-in Fridge #2 - Temp spike</option>
-                          <option value="Salamander Grill - Gas leak smell">Salamander Grill - Gas leak smell</option>
-                          <option value="Dishwasher Conveyor - Jammed">Dishwasher Conveyor - Jammed</option>
-                        </select>
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {/* Anonymous Mode Toggle */}
-                <div className="flex items-center justify-between bg-slate-50 p-3 rounded-xl border border-slate-200">
-                  <div className="flex items-center space-x-2">
-                    <Shield className="w-4 h-4 text-slate-600" />
-                    <span className="text-xs font-bold text-slate-700">Anonymous Mode</span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsAnonymous(!isAnonymous)}
-                    className={`w-11 h-6 rounded-full transition-colors p-0.5 relative ${
-                      isAnonymous ? 'bg-emerald-600' : 'bg-slate-300'
-                    }`}
-                  >
-                    <div className={`w-5 h-5 bg-white rounded-full shadow-md transition-transform ${
-                      isAnonymous ? 'translate-x-5' : 'translate-x-0'
-                    }`}></div>
-                  </button>
-                </div>
-
-                {/* Comments */}
-                <div>
-                  <label className="text-xs font-bold text-slate-500 uppercase tracking-wider block mb-1">Details & Remarks</label>
-                  <textarea
-                    rows={3}
-                    placeholder="Describe shift operational feedback..."
-                    value={feedbackComment}
-                    onChange={(e) => setFeedbackComment(e.target.value)}
-                    className="w-full bg-slate-50 border border-slate-200 rounded-xl p-3 text-sm text-slate-800 focus:bg-white focus:ring-2 focus:ring-emerald-500 focus:outline-none"
-                  ></textarea>
-                </div>
-
-                <button
-                  type="submit"
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white font-extrabold py-3 rounded-xl text-sm transition shadow-sm"
-                >
-                  Submit Log
-                </button>
-              </form>
-            </div>
-
-            {/* Log History Display */}
-            <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-              <h2 className="text-lg font-black text-slate-800">Shift Log History</h2>
-              <div className="space-y-3">
-                {feedbackLogs.map((log) => (
-                  <div 
-                    key={log.id} 
-                    className={`p-4 rounded-xl border ${
-                      log.type === 'good' ? 'bg-emerald-50/50 border-emerald-200' : 'bg-rose-50/50 border-rose-200'
-                    }`}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <div className="flex items-center space-x-2">
-                        <span className={`text-xs font-extrabold px-2.5 py-0.5 rounded-full ${
-                          log.type === 'good' ? 'bg-emerald-200 text-emerald-900' : 'bg-rose-200 text-rose-900'
-                        }`}>
-                          {log.type === 'good' ? 'GOOD SHIFT' : 'ISSUE REPORTED'}
-                        </span>
-                        <span className="text-xs text-slate-500 font-semibold">{log.time}</span>
-                      </div>
-                      <span className="text-xs font-bold text-slate-700 bg-white px-2 py-1 rounded border border-slate-200">
-                        {log.chef}
-                      </span>
-                    </div>
-
-                    {log.issues.length > 0 && (
-                      <div className="flex flex-wrap gap-1 mb-2">
-                        {log.issues.map(i => (
-                          <span key={i} className="text-[10px] font-bold bg-rose-200 text-rose-900 px-2 py-0.5 rounded">
-                            {i}
-                          </span>
-                        ))}
-                      </div>
-                    )}
-
-                    {log.equipment && (
-                      <div className="text-xs font-bold text-rose-800 mb-1">
-                        Equipment: {log.equipment}
-                      </div>
-                    )}
-
-                    <p className="text-sm text-slate-800 font-medium">{log.comment}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* -------------------------------------------------------------
-            MODULE 5: INVENTORY
-        ------------------------------------------------------------- */}
-        {activeTab === 'inventory' && (
-          <div className="space-y-5">
-            
-            {/* Storage Sub-Tabs */}
-            <div className="flex bg-slate-200 p-1 rounded-xl max-w-md mx-auto">
-              <button
-                onClick={() => setInventoryTab('storage')}
-                className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition ${
-                  inventoryTab === 'storage' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                📦 Dry Storage
-              </button>
-              <button
-                onClick={() => setInventoryTab('fridge')}
-                className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition ${
-                  inventoryTab === 'fridge' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                ❄️ Refrigerator
-              </button>
-              <button
-                onClick={() => setInventoryTab('freezer')}
-                className={`flex-1 py-2 text-xs md:text-sm font-bold rounded-lg transition ${
-                  inventoryTab === 'freezer' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-600 hover:text-slate-900'
-                }`}
-              >
-                🧊 Freezer
-              </button>
-            </div>
-
-            {/* Quick Add Item Bar */}
-            <form onSubmit={handleAddInventory} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm grid grid-cols-1 sm:grid-cols-5 gap-3 items-end">
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Item Name</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. French Brie Cheese"
-                  value={newItemName}
-                  onChange={e => setNewItemName(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold text-slate-800"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Quantity</label>
-                <input 
-                  type="text" 
-                  placeholder="e.g. 5 kg / 10 boxes"
-                  value={newItemQty}
-                  onChange={e => setNewItemQty(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold text-slate-800"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Expiry Date</label>
-                <input 
-                  type="date" 
-                  value={newItemExpiry}
-                  onChange={e => setNewItemExpiry(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold text-slate-800"
-                />
-              </div>
-              <div>
-                <label className="text-[11px] font-bold text-slate-500 uppercase">Allergens (comma separated)</label>
-                <input 
-                  type="text" 
-                  placeholder="Dairy, Gluten"
-                  value={newItemAllergens}
-                  onChange={e => setNewItemAllergens(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 p-2 rounded-lg text-xs font-semibold text-slate-800"
-                />
-              </div>
-              <button 
-                type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs p-2.5 rounded-lg flex items-center justify-center space-x-1 shadow-sm transition"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Add Item</span>
-              </button>
-            </form>
-
-            {/* FIFO Expiry Badges Legend */}
-            <div className="flex items-center space-x-4 text-xs font-bold bg-slate-100 p-3 rounded-xl border border-slate-200">
-              <span className="text-slate-500 uppercase tracking-wider">FIFO Legend:</span>
-              <span className="flex items-center space-x-1 text-red-700 bg-red-100 px-2 py-0.5 rounded">
-                <span className="w-2 h-2 rounded-full bg-red-600"></span>
-                <span>Expired / Expiring Today</span>
-              </span>
-              <span className="flex items-center space-x-1 text-amber-800 bg-amber-100 px-2 py-0.5 rounded">
-                <span className="w-2 h-2 rounded-full bg-amber-500"></span>
-                <span>Expiring &lt; 7 Days</span>
-              </span>
-              <span className="flex items-center space-x-1 text-emerald-800 bg-emerald-100 px-2 py-0.5 rounded">
-                <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
-                <span>Fresh / Safe</span>
-              </span>
-            </div>
-
-            {/* Inventory List */}
-            <div className="bg-white rounded-2xl border border-slate-200 overflow-hidden shadow-sm">
-              <div className="divide-y divide-slate-100">
-                {inventory[inventoryTab].map((item) => (
-                  <div key={item.id} className="p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-3 hover:bg-slate-50 transition">
-                    <div className="space-y-1">
-                      <div className="flex items-center space-x-2">
-                        <span className="font-extrabold text-slate-800 text-sm md:text-base">{item.name}</span>
-                        
-                        {/* FIFO BADGE */}
-                        {item.status === 'red' && (
-                          <span className="bg-red-500 text-white text-[10px] font-black px-2 py-0.5 rounded uppercase animate-pulse">
-                            🚨 Expiring Today
-                          </span>
-                        )}
-                        {item.status === 'yellow' && (
-                          <span className="bg-amber-100 text-amber-800 border border-amber-300 text-[10px] font-extrabold px-2 py-0.5 rounded uppercase">
-                            ⚠️ Use First (FIFO)
-                          </span>
-                        )}
-                        {item.status === 'green' && (
-                          <span className="bg-emerald-100 text-emerald-800 text-[10px] font-bold px-2 py-0.5 rounded">
-                            OK
-                          </span>
-                        )}
-                      </div>
-
-                      <div className="text-xs text-slate-500 font-semibold flex items-center space-x-3">
-                        <span>Quantity: <strong className="text-slate-800">{item.qty}</strong></span>
-                        <span>Expiry Date: <strong className="text-slate-800">{item.expiry}</strong></span>
-                      </div>
-                    </div>
-
-                    {/* PURPLE ALLERGEN TAGS */}
-                    <div className="flex items-center space-x-1.5 flex-wrap">
-                      {item.allergens.length > 0 ? (
-                        item.allergens.map((alg) => (
-                          <span 
-                            key={alg}
-                            className="bg-purple-100 text-purple-900 border border-purple-200 text-xs font-extrabold px-2.5 py-1 rounded-md shadow-2xs"
-                          >
-                            ⚠️ Allergen: {alg}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-xs text-slate-400 font-medium">No Allergens</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-          </div>
-        )}
-
-        {/* -------------------------------------------------------------
-            MODULE 6: HANDOVER & GUEST NOTES
-        ------------------------------------------------------------- */}
-        {activeTab === 'handover' && (
-          <div className="space-y-5">
-            
-            {/* Quick Add Note Form */}
-            <form onSubmit={handleAddHandover} className="bg-white p-4 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row gap-3">
-              <select
-                value={newNoteCategory}
-                onChange={(e) => setNewNoteCategory(e.target.value)}
-                className="bg-slate-100 border border-slate-200 rounded-xl px-3 py-2 text-xs font-bold text-slate-800 focus:outline-none"
-              >
-                <option value="complaints">🗣️ Guest Complaints</option>
-                <option value="mistakes">⚠️ Kitchen Mistakes</option>
-                <option value="requests">🌟 Special Requests</option>
-              </select>
-
-              <input
-                type="text"
-                placeholder="Type handover note or guest request..."
-                value={newNoteText}
-                onChange={(e) => setNewNoteText(e.target.value)}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-xl px-4 py-2 text-sm text-slate-800 focus:bg-white focus:outline-none"
-              />
-
-              <button
-                type="submit"
-                className="bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs px-5 py-2.5 rounded-xl shadow-sm transition flex items-center justify-center space-x-1"
-              >
-                <Plus className="w-4 h-4" />
-                <span>Post Handover</span>
-              </button>
-            </form>
-
-            {/* 3 Organized Panels */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              
-              {/* Panel 1: Guest Complaints */}
-              <div className="bg-white rounded-2xl border border-rose-200 p-4 shadow-sm space-y-3">
-                <div className="flex items-center space-x-2 pb-2 border-b border-rose-100 text-rose-800 font-black text-base">
-                  <span>🗣️</span>
-                  <h3>Guest Complaints</h3>
-                </div>
-
-                <div className="space-y-2.5">
-                  {handovers.complaints.map((item) => (
-                    <div key={item.id} className="p-3 bg-rose-50/50 border border-rose-100 rounded-xl space-y-1">
-                      <p className="text-xs text-slate-800 font-medium leading-relaxed">{item.text}</p>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
-                        <span>{item.chef}</span>
-                        <span>{item.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Panel 2: Kitchen Mistakes */}
-              <div className="bg-white rounded-2xl border border-amber-200 p-4 shadow-sm space-y-3">
-                <div className="flex items-center space-x-2 pb-2 border-b border-amber-100 text-amber-900 font-black text-base">
-                  <span>⚠️</span>
-                  <h3>Kitchen Mistakes</h3>
-                </div>
-
-                <div className="space-y-2.5">
-                  {handovers.mistakes.map((item) => (
-                    <div key={item.id} className="p-3 bg-amber-50/50 border border-amber-100 rounded-xl space-y-1">
-                      <p className="text-xs text-slate-800 font-medium leading-relaxed">{item.text}</p>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
-                        <span>{item.chef}</span>
-                        <span>{item.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-              {/* Panel 3: Special Requests */}
-              <div className="bg-white rounded-2xl border border-emerald-200 p-4 shadow-sm space-y-3">
-                <div className="flex items-center space-x-2 pb-2 border-b border-emerald-100 text-emerald-900 font-black text-base">
-                  <span>🌟</span>
-                  <h3>Special Requests</h3>
-                </div>
-
-                <div className="space-y-2.5">
-                  {handovers.requests.map((item) => (
-                    <div key={item.id} className="p-3 bg-emerald-50/50 border border-emerald-100 rounded-xl space-y-1">
-                      <p className="text-xs text-slate-800 font-medium leading-relaxed">{item.text}</p>
-                      <div className="flex items-center justify-between text-[10px] text-slate-400 font-bold">
-                        <span>{item.chef}</span>
-                        <span>{item.time}</span>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-
-            </div>
-
-          </div>
-        )}
-
-      </main>
-
-      {/* -------------------------------------------------------------
-          WHATSAPP-STYLE BOTTOM NAVIGATION BAR (FIXED AT BOTTOM)
-          Pill badge active highlight (#DCFCE7 / emerald-100)
-          Exact requested Emojis & Titles
-      ------------------------------------------------------------- */}
-      <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 shadow-lg z-50 px-2 py-1.5">
-        <div className="max-w-xl mx-auto flex items-center justify-around">
-          
-          {/* 1. SCHEDULE */}
-          <button
-            onClick={() => setActiveTab('schedule')}
-            className="flex flex-col items-center justify-center flex-1 py-1 focus:outline-none transition group"
-          >
-            <div className={`px-4 py-1 rounded-full transition-all duration-200 flex items-center justify-center ${
-              activeTab === 'schedule' ? 'bg-[#DCFCE7] text-emerald-800 font-bold scale-105' : 'hover:bg-slate-100 text-slate-600'
-            }`}>
-              <span className="text-xl">📅</span>
-            </div>
-            <span className={`text-[11px] mt-0.5 tracking-tight font-bold ${
-              activeTab === 'schedule' ? 'text-emerald-900' : 'text-slate-500'
-            }`}>
-              Schedule
-            </span>
-          </button>
-
-          {/* 2. DAILY DUTIES */}
-          <button
-            onClick={() => setActiveTab('duties')}
-            className="flex flex-col items-center justify-center flex-1 py-1 focus:outline-none transition group"
-          >
-            <div className={`px-4 py-1 rounded-full transition-all duration-200 flex items-center justify-center ${
-              activeTab === 'duties' ? 'bg-[#DCFCE7] text-emerald-800 font-bold scale-105' : 'hover:bg-slate-100 text-slate-600'
-            }`}>
-              <span className="text-xl">📌</span>
-            </div>
-            <span className={`text-[11px] mt-0.5 tracking-tight font-bold ${
-              activeTab === 'duties' ? 'text-emerald-900' : 'text-slate-500'
-            }`}>
-              Daily Duties
-            </span>
-          </button>
-
-          {/* 3. SOPs */}
-          <button
-            onClick={() => setActiveTab('sops')}
-            className="flex flex-col items-center justify-center flex-1 py-1 focus:outline-none transition group"
-          >
-            <div className={`px-4 py-1 rounded-full transition-all duration-200 flex items-center justify-center ${
-              activeTab === 'sops' ? 'bg-[#DCFCE7] text-emerald-800 font-bold scale-105' : 'hover:bg-slate-100 text-slate-600'
-            }`}>
-              <span className="text-xl">🥗</span>
-            </div>
-            <span className={`text-[11px] mt-0.5 tracking-tight font-bold ${
-              activeTab === 'sops' ? 'text-emerald-900' : 'text-slate-500'
-            }`}>
-              SOPs
-            </span>
-          </button>
-
-          {/* 4. SHIFT FEEDBACK */}
-          <button
-            onClick={() => setActiveTab('feedback')}
-            className="flex flex-col items-center justify-center flex-1 py-1 focus:outline-none transition group"
-          >
-            <div className={`px-4 py-1 rounded-full transition-all duration-200 flex items-center justify-center ${
-              activeTab === 'feedback' ? 'bg-[#DCFCE7] text-emerald-800 font-bold scale-105' : 'hover:bg-slate-100 text-slate-600'
-            }`}>
-              <span className="text-xl">📝</span>
-            </div>
-            <span className={`text-[11px] mt-0.5 tracking-tight font-bold ${
-              activeTab === 'feedback' ? 'text-emerald-900' : 'text-slate-500'
-            }`}>
-              Shift Feedback
-            </span>
-          </button>
-
-          {/* 5. INVENTORY */}
-          <button
-            onClick={() => setActiveTab('inventory')}
-            className="flex flex-col items-center justify-center flex-1 py-1 focus:outline-none transition group"
-          >
-            <div className={`px-4 py-1 rounded-full transition-all duration-200 flex items-center justify-center ${
-              activeTab === 'inventory' ? 'bg-[#DCFCE7] text-emerald-800 font-bold scale-105' : 'hover:bg-slate-100 text-slate-600'
-            }`}>
-              <span className="text-xl">📦</span>
-            </div>
-            <span className={`text-[11px] mt-0.5 tracking-tight font-bold ${
-              activeTab === 'inventory' ? 'text-emerald-900' : 'text-slate-500'
-            }`}>
-              Inventory
-            </span>
-          </button>
-
-          {/* 6. HANDOVER */}
-          <button
-            onClick={() => setActiveTab('handover')}
-            className="flex flex-col items-center justify-center flex-1 py-1 focus:outline-none transition group"
-          >
-            <div className={`px-4 py-1 rounded-full transition-all duration-200 flex items-center justify-center ${
-              activeTab === 'handover' ? 'bg-[#DCFCE7] text-emerald-800 font-bold scale-105' : 'hover:bg-slate-100 text-slate-600'
-            }`}>
-              <span className="text-xl">📋</span>
-            </div>
-            <span className={`text-[11px] mt-0.5 tracking-tight font-bold ${
-              activeTab === 'handover' ? 'text-emerald-900' : 'text-slate-500'
-            }`}>
-              Handover
-            </span>
-          </button>
-
-        </div>
-      </nav>
-
-      {/* -------------------------------------------------------------
-          DYNAMIC MODALS FOR MEDIA & IMAGE LINK EDITING
-      ------------------------------------------------------------- */}
-      {modalContent && (
-        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl max-w-lg w-full overflow-hidden shadow-2xl animate-scaleIn">
-            
-            <div className="p-4 border-b border-slate-200 flex items-center justify-between bg-slate-50">
-              <h3 className="font-extrabold text-slate-800 text-base">
-                {modalContent.type === 'edit_image' ? 'Customize Dish Image URL' : modalContent.title}
-              </h3>
-              <button 
-                onClick={() => setModalContent(null)}
-                className="p-1 text-slate-400 hover:text-slate-800 rounded-lg hover:bg-slate-200 transition"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            </div>
-
-            <div className="p-4">
-              {/* Photo Viewer Modal */}
-              {modalContent.type === 'photo' && (
-                <div className="rounded-xl overflow-hidden bg-slate-100 max-h-96">
-                  <img src={modalContent.url} alt="SOP Presentation" className="w-full h-full object-cover" />
-                </div>
-              )}
-
-              {/* Video Modal */}
-              {modalContent.type === 'video' && (
-                <div className="aspect-video bg-black rounded-xl overflow-hidden">
-                  <iframe
-                    className="w-full h-full"
-                    src={modalContent.url}
-                    title="Kitchen SOP Video"
-                    allowFullScreen
-                  ></iframe>
-                </div>
-              )}
-
-              {/* Edit Image Modal */}
-              {modalContent.type === 'edit_image' && (
-                <div className="space-y-4">
-                  <p className="text-xs text-slate-600 font-medium">
-                    Paste a new image link to customize the presentation photo for this dish card:
-                  </p>
-                  <input
-                    type="text"
-                    placeholder="https://images.unsplash.com/photo-..."
-                    value={tempImageUrl}
-                    onChange={(e) => setTempImageUrl(e.target.value)}
-                    className="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-mono text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  />
-                  {tempImageUrl && (
-                    <div className="h-32 rounded-lg overflow-hidden border border-slate-200 bg-slate-100">
-                      <img src={tempImageUrl} alt="Preview" className="w-full h-full object-cover" />
-                    </div>
-                  )}
-                  <div className="flex justify-end space-x-2 pt-2">
-                    <button
-                      onClick={() => setModalContent(null)}
-                      className="px-4 py-2 text-xs font-bold text-slate-600 bg-slate-100 rounded-xl hover:bg-slate-200"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={saveCustomImage}
-                      className="px-4 py-2 text-xs font-bold text-white bg-emerald-600 rounded-xl hover:bg-emerald-700 shadow-sm"
-                    >
-                      Save Image URL
-                    </button>
-                  </div>
-                </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-      )}
+      <div>
+        <h1 class="font-extrabold text-lg md:text-xl text-slate-800 tracking-tight leading-none">Kitchen Operations Hub</h1>
+        <p class="text-xs text-slate-500 font-medium mt-0.5">Live Shift Management & SOPs</p>
+      </div>
+    </div>
+    <div class="bg-slate-100 px-3 py-1.5 rounded-lg border border-slate-200 flex items-center space-x-2 text-xs font-semibold text-slate-700">
+      <span class="w-2 h-2 rounded-full bg-emerald-500 animate-ping"></span>
+      <span>Kitchen Live</span>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="flex-1 max-w-7xl w-full mx-auto p-3 sm:p-5" id="app-container">
+    <!-- Dynamic views injected here -->
+  </main>
+
+  <!-- WHATSAPP-STYLE BOTTOM NAVIGATION BAR -->
+  <nav class="fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-lg px-2 py-2">
+    <div class="max-w-4xl mx-auto grid grid-cols-6 gap-1">
+      
+      <!-- 1. Schedule -->
+      <button onclick="switchTab('schedule')" id="nav-schedule" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 bg-[#DCFCE7] text-emerald-900 font-bold">
+        <span class="text-xl mb-0.5">📅</span>
+        <span class="text-[10px] sm:text-xs truncate w-full text-center">Schedule</span>
+      </button>
+
+      <!-- 2. Daily Duties -->
+      <button onclick="switchTab('duties')" id="nav-duties" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 font-medium">
+        <span class="text-xl mb-0.5">📌</span>
+        <span class="text-[10px] sm:text-xs truncate w-full text-center">Daily Duties</span>
+      </button>
+
+      <!-- 3. SOPs -->
+      <button onclick="switchTab('sops')" id="nav-sops" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 font-medium">
+        <span class="text-xl mb-0.5">🥗</span>
+        <span class="text-[10px] sm:text-xs truncate w-full text-center">SOPs</span>
+      </button>
+
+      <!-- 4. Shift Feedback -->
+      <button onclick="switchTab('feedback')" id="nav-feedback" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 font-medium">
+        <span class="text-xl mb-0.5">📝</span>
+        <span class="text-[10px] sm:text-xs truncate w-full text-center">Feedback</span>
+      </button>
+
+      <!-- 5. Inventory -->
+      <button onclick="switchTab('inventory')" id="nav-inventory" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 font-medium">
+        <span class="text-xl mb-0.5">📦</span>
+        <span class="text-[10px] sm:text-xs truncate w-full text-center">Inventory</span>
+      </button>
+
+      <!-- 6. Handover -->
+      <button onclick="switchTab('handover')" id="nav-handover" class="flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 font-medium">
+        <span class="text-xl mb-0.5">📋</span>
+        <span class="text-[10px] sm:text-xs truncate w-full text-center">Handover</span>
+      </button>
 
     </div>
-  );
-}
+  </nav>
+
+  <!-- MODAL CONTAINER -->
+  <div id="modal-backdrop" class="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs hidden items-center justify-center p-4">
+    <div id="modal-content" class="bg-white rounded-2xl max-w-lg w-full p-6 shadow-2xl relative animate-in fade-in zoom-in-95 duration-150">
+      <!-- Modal content inserted dynamically -->
+    </div>
+  </div>
+
+  <!-- APPLICATION JAVASCRIPT LOGIC -->
+  <script>
+    // State Data
+    let currentTab = 'schedule';
+    let searchQuery = '';
+    let guestCount = 10;
+    let sopSubTab = 'morning';
+    let inventoryTab = 'fridge';
+    let feedbackType = 'good';
+    let selectedIssues = [];
+    let isAnonymous = false;
+    let handoverCategory = 'complaints';
+
+    let staffData = {
+      morning: [
+        { id: '1', name: 'Muhamed Mamdouh', role: 'Sous Chef', section: 'Hot' },
+        { id: '2', name: 'Mustafa Magdy', role: 'Chef de Partie', section: 'Cold' },
+        { id: '3', name: 'Muhamed Kamal', role: 'First Commis', section: 'Grill' },
+        { id: '4', name: 'Hadeer Muhamed', role: 'Demi Chef', section: 'Buffet' },
+        { id: '5', name: 'Muhamed Ahmed', role: 'Second Commis', section: 'Cold' },
+        { id: '6', name: 'Kareem Ashraf', role: 'First Commis', section: 'Hot' },
+        { id: '7', name: 'Sameh Sameer', role: 'Demi Chef', section: 'Grill' }
+      ],
+      afternoon: [
+        { id: '8', name: 'Islam Anwar', role: 'Chef de Partie', section: 'Hot' },
+        { id: '9', name: 'Eid Muhamed', role: 'First Commis', section: 'Grill' },
+        { id: '10', name: 'Taher Ahmed', role: 'Demi Chef', section: 'Cold' },
+        { id: '11', name: 'Hamdy Osama', role: 'Second Commis', section: 'Buffet' },
+        { id: '12', name: 'Ayman Salah', role: 'First Commis', section: 'Hot' },
+        { id: '13', name: 'Muhamed Mustafa', role: 'Chef de Partie', section: 'Grill' }
+      ],
+      night: [
+        { id: '14', name: 'Islam Muhamed', role: 'Chef de Partie', section: 'Hot' },
+        { id: '15', name: 'Hassan Ahmed', role: 'First Commis', section: 'Cold' },
+        { id: '16', name: 'Aashour', role: 'Demi Chef', section: 'Buffet' },
+        { id: '17', name: 'Islam Ahmed', role: 'Second Commis', section: 'Grill' }
+      ]
+    };
+
+    let dutyCards = [
+      { id: 'd1', title: 'High Tea Stand', type: 'High Tea', image: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=800', desc: 'Foccacia salmon sandwich pieces, tortilla stuffed with cream cheese and roasted beef, panini bread stuffed turkey, brown toast stuffed cheddar cheese' },
+      { id: 'd2', title: 'Executive Cheese Board', type: 'Buffet', image: 'https://images.unsplash.com/photo-1631379578550-7038263db699?auto=format&fit=crop&q=80&w=800', desc: 'Selection of Aged Cheddar, French Brie, Gouda, Blue Cheese, Crackers, Dried Figs, Grapes & Nuts' },
+      { id: 'd3', title: 'Classic Caesar Salad', type: 'Set Menu', image: 'https://images.unsplash.com/photo-1550304943-4f24f54ddde9?auto=format&fit=crop&q=80&w=800', desc: 'Crisp Romaine lettuce, shaved Parmesan, garlic herb croutons, poached chicken breast & house Caesar dressing' },
+      { id: 'd4', title: 'Gourmet Breakfast Box', type: 'Breakfast Boxes', image: 'https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=800', desc: 'Box contains apple, banana, jam & honey portion, croissant, danish, rolls and mini sandwich' }
+    ];
+
+    let inventoryData = {
+      storage: [
+        { name: 'Panini Bread', qty: '40 loaves', expiry: '2026-09-15', status: 'yellow', allergens: ['Gluten'] },
+        { name: 'Brown Toast', qty: '15 packs', expiry: '2026-09-11', status: 'yellow', allergens: ['Gluten'] }
+      ],
+      fridge: [
+        { name: 'Smoked Salmon Slices', qty: '2.5 kg', expiry: '2026-09-10', status: 'red', allergens: ['Fish'] },
+        { name: 'Cream Cheese', qty: '4 kg', expiry: '2026-09-12', status: 'yellow', allergens: ['Dairy'] },
+        { name: 'Sous-vide Chicken', qty: '8.5 kg', expiry: '2026-09-11', status: 'yellow', allergens: [] }
+      ],
+      freezer: [
+        { name: 'Croissants Dough', qty: '200 pcs', expiry: '2026-10-15', status: 'green', allergens: ['Gluten', 'Dairy'] },
+        { name: 'Ice Cream Base', qty: '5 tubs', expiry: '2026-09-10', status: 'red', allergens: ['Dairy', 'Nuts'] }
+      ]
+    };
+
+    let feedbackLogs = [
+      { type: 'good', comment: 'Morning shift finished prep 30 mins early!', time: '11:30 AM', chef: 'Muhamed Mamdouh', issues: [] },
+      { type: 'bad', comment: 'Grill Unit #2 temperature fluctuation.', time: '03:15 PM', chef: 'Anonymous', issues: ['Equipment & Tools'] }
+    ];
+
+    let handovers = {
+      complaints: [{ text: 'Room 210 reported Caesar Salad was slightly over-salted.', time: '14:20', chef: 'Islam A.' }],
+      mistakes: [{ text: 'Burned 1 batch of panini bread during afternoon rush.', time: '15:45', chef: 'Hamdy O.' }],
+      requests: [{ text: 'VIP Table 4 requested gluten-free rolls for tomorrow high tea.', time: '16:00', chef: 'Muhamed M.' }]
+    };
+
+    let clubSandwichImg = 'https://images.unsplash.com/photo-1528735602780-2552fd46c7af?auto=format&fit=crop&q=80&w=800';
+
+    // Switch Navigation Tab
+    function switchTab(tab) {
+      currentTab = tab;
+      // Update nav styles
+      ['schedule', 'duties', 'sops', 'feedback', 'inventory', 'handover'].forEach(t => {
+        const btn = document.getElementById(`nav-${t}`);
+        if (t === tab) {
+          btn.className = "flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 bg-[#DCFCE7] text-emerald-900 font-bold shadow-xs";
+        } else {
+          btn.className = "flex flex-col items-center justify-center py-1.5 px-1 rounded-xl transition-all duration-200 text-slate-600 hover:bg-slate-100 font-medium";
+        }
+      });
+      render();
+    }
+
+    // Render View based on activeTab
+    function render() {
+      const container = document.getElementById('app-container');
+      lucide.createIcons();
+
+      if (currentTab === 'schedule') {
+        container.innerHTML = renderSchedule();
+      } else if (currentTab === 'duties') {
+        container.innerHTML = renderDuties();
+      } else if (currentTab === 'sops') {
+        container.innerHTML = renderSOPs();
+      } else if (currentTab === 'feedback') {
+        container.innerHTML = renderFeedback();
+      } else if (currentTab === 'inventory') {
+        container.innerHTML = renderInventory();
+      } else if (currentTab === 'handover') {
+        container.innerHTML = renderHandover();
+      }
+      lucide.createIcons();
+    }
+
+    // 1. SCHEDULE VIEW
+    function renderSchedule() {
+      const totalCount = staffData.morning.length + staffData.afternoon.length + staffData.night.length;
+      
+      const filterList = (list) => {
+        if (!searchQuery.trim()) return list;
+        const q = searchQuery.toLowerCase();
+        return list.filter(s => s.name.toLowerCase().includes(q) || s.role.toLowerCase().includes(q) || s.section.toLowerCase().includes(q));
+      };
+
+      const renderCard = (staff, shiftKey) => {
+        const badgeColors = {
+          'Cold': 'bg-blue-100 text-blue-800 border-blue-200',
+          'Hot': 'bg-red-100 text-red-800 border-red-200',
+          'Grill': 'bg-orange-100 text-orange-800 border-orange-200',
+          'Buffet': 'bg-amber-100 text-amber-800 border-amber-200'
+        }[staff.section] || 'bg-slate-100 text-slate-800 border-slate-200';
+
+        let moveButtons = '';
+        if (shiftKey !== 'morning') moveButtons += `<button onclick="moveStaff('${staff.id}', '${shiftKey}', 'morning')" class="text-[10px] bg-amber-100 text-amber-800 px-1.5 py-0.5 rounded font-bold">🌅 Morning</button>`;
+        if (shiftKey !== 'afternoon') moveButtons += `<button onclick="moveStaff('${staff.id}', '${shiftKey}', 'afternoon')" class="text-[10px] bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded font-bold">☀️ Afternoon</button>`;
+        if (shiftKey !== 'night') moveButtons += `<button onclick="moveStaff('${staff.id}', '${shiftKey}', 'night')" class="text-[10px] bg-indigo-100 text-indigo-800 px-1.5 py-0.5 rounded font-bold">🌙 Night</button>`;
+
+        return `
+          <div class="p-3 bg-slate-50 border border-slate-200 rounded-xl shadow-xs space-y-2">
+            <div class="flex items-start justify-between">
+              <div>
+                <div class="font-bold text-slate-800 text-sm">${staff.name}</div>
+                <div class="text-xs text-slate-500 font-medium">${staff.role}</div>
+              </div>
+              <span class="px-2 py-0.5 text-[10px] font-extrabold rounded-full border ${badgeColors}">${staff.section}</span>
+            </div>
+            <div class="flex items-center space-x-1 pt-1 border-t border-slate-200 flex-wrap gap-1">
+              <span class="text-[10px] text-slate-400 font-semibold mr-1">Move to:</span>
+              ${moveButtons}
+            </div>
+          </div>
+        `;
+      };
+
+      return `
+        <div class="space-y-5">
+          <!-- Metrics -->
+          <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+            <div class="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center space-x-3">
+              <div class="p-3 bg-slate-100 text-slate-800 rounded-lg"><i data-lucide="users" class="w-6 h-6"></i></div>
+              <div><div class="text-2xl font-black text-slate-800">${totalCount}</div><div class="text-xs font-bold text-slate-500 uppercase">Total Staff</div></div>
+            </div>
+            <div class="bg-amber-50/50 p-4 rounded-xl border border-amber-200 shadow-sm flex items-center space-x-3">
+              <div class="p-3 bg-amber-100 text-amber-800 rounded-lg"><span class="text-lg">🌅</span></div>
+              <div><div class="text-2xl font-black text-amber-900">${staffData.morning.length}</div><div class="text-xs font-bold text-amber-700 uppercase">Morning</div></div>
+            </div>
+            <div class="bg-orange-50/50 p-4 rounded-xl border border-orange-200 shadow-sm flex items-center space-x-3">
+              <div class="p-3 bg-orange-100 text-orange-800 rounded-lg"><span class="text-lg">☀️</span></div>
+              <div><div class="text-2xl font-black text-orange-900">${staffData.afternoon.length}</div><div class="text-xs font-bold text-orange-700 uppercase">Afternoon</div></div>
+            </div>
+            <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-200 shadow-sm flex items-center space-x-3">
+              <div class="p-3 bg-indigo-100 text-indigo-800 rounded-lg"><span class="text-lg">🌙</span></div>
+              <div><div class="text-2xl font-black text-indigo-900">${staffData.night.length}</div><div class="text-xs font-bold text-indigo-700 uppercase">Night</div></div>
+            </div>
+          </div>
+
+          <!-- Search -->
+          <div class="relative">
+            <i data-lucide="search" class="w-5 h-5 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400"></i>
+            <input type="text" placeholder="Search staff by Name, Job Title, or Section (Hot, Cold, Grill, Buffet)..." value="${searchQuery}" oninput="searchQuery=this.value; render()" class="w-full pl-11 pr-4 py-3 bg-white border border-slate-300 rounded-xl text-slate-800 placeholder-slate-400 font-medium focus:ring-2 focus:ring-emerald-500 focus:outline-none shadow-sm text-sm" />
+          </div>
+
+          <!-- Shift Columns -->
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Morning -->
+            <div class="bg-white rounded-2xl border-2 border-amber-200 p-4 shadow-sm flex flex-col min-h-[400px]">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-amber-100">
+                <div class="flex items-center space-x-2"><span class="text-xl">🌅</span><h3 class="font-bold text-slate-800">Morning Shift</h3></div>
+                <span class="bg-amber-100 text-amber-800 text-xs font-extrabold px-2.5 py-1 rounded-full">${filterList(staffData.morning).length}</span>
+              </div>
+              <div class="space-y-2.5 flex-1">${filterList(staffData.morning).map(s => renderCard(s, 'morning')).join('')}</div>
+            </div>
+            <!-- Afternoon -->
+            <div class="bg-white rounded-2xl border-2 border-orange-200 p-4 shadow-sm flex flex-col min-h-[400px]">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-orange-100">
+                <div class="flex items-center space-x-2"><span class="text-xl">☀️</span><h3 class="font-bold text-slate-800">Afternoon Shift</h3></div>
+                <span class="bg-orange-100 text-orange-800 text-xs font-extrabold px-2.5 py-1 rounded-full">${filterList(staffData.afternoon).length}</span>
+              </div>
+              <div class="space-y-2.5 flex-1">${filterList(staffData.afternoon).map(s => renderCard(s, 'afternoon')).join('')}</div>
+            </div>
+            <!-- Night -->
+            <div class="bg-white rounded-2xl border-2 border-indigo-200 p-4 shadow-sm flex flex-col min-h-[400px]">
+              <div class="flex items-center justify-between pb-3 mb-3 border-b border-indigo-100">
+                <div class="flex items-center space-x-2"><span class="text-xl">🌙</span><h3 class="font-bold text-slate-800">Night Shift</h3></div>
+                <span class="bg-indigo-100 text-indigo-800 text-xs font-extrabold px-2.5 py-1 rounded-full">${filterList(staffData.night).length}</span>
+              </div>
+              <div class="space-y-2.5 flex-1">${filterList(staffData.night).map(s => renderCard(s, 'night')).join('')}</div>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function moveStaff(id, source, target) {
+      let member = null;
+      staffData[source] = staffData[source].filter(s => {
+        if (s.id === id) { member = s; return false; }
+        return true;
+      });
+      if (member) staffData[target].push(member);
+      render();
+    }
+
+    // 2. DAILY DUTIES VIEW
+    function renderDuties() {
+      const stands = Math.ceil(guestCount / 5);
+      const boards = Math.ceil(guestCount / 10);
+      const salads = guestCount;
+      const boxes = guestCount;
+
+      return `
+        <div class="space-y-6">
+          <div class="bg-white p-5 rounded-2xl border border-slate-200 shadow-sm flex flex-col md:flex-row items-center justify-between gap-4">
+            <div>
+              <h2 class="text-lg font-extrabold text-slate-800">📌 Dynamic Headcount Equipment Calculator</h2>
+              <p class="text-xs text-slate-500 font-medium mt-0.5">Automatically scales stands, boards, and ingredients based on daily guest volume.</p>
+            </div>
+            <div class="flex items-center space-x-3 bg-slate-50 p-2.5 rounded-xl border border-slate-200">
+              <span class="text-xs font-bold text-slate-700">Guest Headcount:</span>
+              <input type="number" min="1" max="500" value="${guestCount}" onchange="guestCount=parseInt(this.value)||1; render()" class="w-20 px-3 py-1.5 bg-white border border-slate-300 rounded-lg text-center font-black text-emerald-700 text-base focus:outline-none" />
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+            ${dutyCards.map(d => `
+              <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden flex flex-col">
+                <div class="relative h-48 sm:h-56 bg-slate-100">
+                  <img src="${d.image}" alt="${d.title}" class="w-full h-full object-cover" />
+                  <div class="absolute top-3 left-3 bg-black/70 backdrop-blur-xs text-white text-xs font-bold px-3 py-1 rounded-full">${d.type}</div>
+                  <button onclick="openImagePrompt('${d.id}')" class="absolute bottom-3 right-3 bg-white/90 hover:bg-white text-slate-800 p-2 rounded-xl shadow font-semibold text-xs flex items-center space-x-1">
+                    <i data-lucide="image" class="w-4 h-4"></i><span>Change Photo</span>
+                  </button>
+                </div>
+                <div class="p-5 flex-1 flex flex-col justify-between space-y-4">
+                  <div>
+                    <h3 class="font-extrabold text-lg text-slate-800 mb-2">${d.title}</h3>
+                    <p class="text-xs text-slate-600 leading-relaxed font-medium bg-slate-50 p-3 rounded-xl border border-slate-100">${d.desc}</p>
+                  </div>
+                  <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 flex items-center justify-between text-xs font-bold text-emerald-900">
+                    <span>Required for ${guestCount} Guests:</span>
+                    <span class="bg-emerald-600 text-white px-2.5 py-1 rounded-lg">
+                      ${d.type === 'High Tea' ? `${stands} Stand(s)` : d.type === 'Buffet' ? `${boards} Cheese Board(s)` : `${salads} Portions`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      `;
+    }
+
+    // 3. SOPS VIEW
+    function renderSOPs() {
+      return `
+        <div class="space-y-5">
+          <div class="flex space-x-2 border-b border-slate-200 pb-3">
+            <button onclick="sopSubTab='morning'; render()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${sopSubTab === 'morning' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">🌅 Morning (Mise en Place)</button>
+            <button onclick="sopSubTab='afternoon'; render()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${sopSubTab === 'afternoon' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">☀️ Afternoon (Plating)</button>
+            <button onclick="sopSubTab='night'; render()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${sopSubTab === 'night' ? 'bg-emerald-600 text-white shadow-sm' : 'bg-white text-slate-600 border border-slate-200 hover:bg-slate-50'}">🌙 Night (Buffet Setup)</button>
+          </div>
+
+          ${sopSubTab === 'morning' ? `
+            <div class="space-y-5">
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm grid grid-cols-1 md:grid-cols-3 gap-5">
+                <div class="relative h-48 rounded-xl overflow-hidden bg-slate-100">
+                  <img src="${clubSandwichImg}" class="w-full h-full object-cover" />
+                  <button onclick="openImagePrompt('club')" class="absolute bottom-2 right-2 bg-black/70 text-white p-1.5 rounded-lg text-xs">Edit Photo</button>
+                </div>
+                <div class="md:col-span-2 space-y-3">
+                  <h3 class="font-extrabold text-lg text-slate-800">Club Sandwich Dressing Prep & Recipe</h3>
+                  <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-2 text-xs font-medium text-slate-700">
+                    <div class="font-bold text-slate-900 border-b pb-1">Ingredient Specs:</div>
+                    <p>• 500g Mayonnaise</p>
+                    <p>• 30g Dijon Mustard</p>
+                    <p>• 5ml Fresh Lemon Juice</p>
+                    <p>• Pinch of Sea Salt & Cracked Black Pepper</p>
+                  </div>
+                  <div class="flex space-x-2 pt-2">
+                    <button onclick="openModal('photo', '${clubSandwichImg}')" class="px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 rounded-lg text-xs font-bold flex items-center space-x-1.5">
+                      <i data-lucide="eye" class="w-4 h-4"></i><span>View Photo Modal</span>
+                    </button>
+                    <button onclick="openModal('video', '')" class="px-3 py-1.5 bg-emerald-50 hover:bg-emerald-100 text-emerald-800 rounded-lg text-xs font-bold flex items-center space-x-1.5">
+                      <i data-lucide="play" class="w-4 h-4"></i><span>Watch Video SOP</span>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+                <h3 class="font-extrabold text-base text-slate-800">Protein Prep & Temperature Checks</h3>
+                <div class="p-4 bg-amber-50/50 border border-amber-200 rounded-xl text-xs text-amber-900 font-medium leading-relaxed">
+                  <strong>Sous-vide Chicken Breast:</strong> Cook precisely at 65°C for 4 hours. Chill rapidly, then slice exactly at 4mm thickness before assembly.
+                </div>
+              </div>
+            </div>
+          ` : sopSubTab === 'afternoon' ? `
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-5">
+              <h3 class="font-extrabold text-lg text-slate-800">Club Sandwich Assembly & Plating Specifications</h3>
+              <div class="space-y-4 text-xs font-medium text-slate-700">
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <strong class="text-slate-900">Step 1: Toasting</strong><br/>Toast 3 slices of toast bread to golden brown, lightly spread dressing on each slice.
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <strong class="text-slate-900">Step 2: Layering</strong><br/>Layer 1: Iceberg lettuce, 4 sliced tomatoes, one slice cheddar piece, 2 slices grilled bacon.<br/>Layer 2: 4 chicken breast slices and omelette.
+                </div>
+                <div class="p-3 bg-slate-50 rounded-xl border border-slate-200">
+                  <strong class="text-slate-900">Step 3: Pressing & Cutting</strong><br/>After pressing on sandwich maker, trim crusts and cut into 4 equal triangles. Serve with olives & iceberg lettuce with one cherry tomato in master pots.
+                </div>
+              </div>
+              <button onclick="openModal('photo', '${clubSandwichImg}')" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold shadow-sm">View Plating Photo Modal</button>
+            </div>
+          ` : `
+            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm space-y-4">
+              <h3 class="font-extrabold text-lg text-slate-800">Night Shift Breakfast Buffet Prep & Setup</h3>
+              <p class="text-xs text-slate-600 leading-relaxed font-medium">Verify all chafing dishes, temperature logs (above 65°C hot holding), and replenish fresh bakery displays prior to 06:00 AM breakfast service.</p>
+              <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
+                <img src="https://images.unsplash.com/photo-1533089860892-a7c6f0a88666?auto=format&fit=crop&q=80&w=800" class="rounded-xl h-40 object-cover w-full border" />
+                <img src="https://images.unsplash.com/photo-1525351484163-7529414344d8?auto=format&fit=crop&q=80&w=800" class="rounded-xl h-40 object-cover w-full border" />
+              </div>
+            </div>
+          `}
+        </div>
+      `;
+    }
+
+    // 4. SHIFT FEEDBACK VIEW
+    function renderFeedback() {
+      return `
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-5">
+          <div class="lg:col-span-1 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <h3 class="font-extrabold text-base text-slate-800">📝 Log Shift Feedback</h3>
+            
+            <div class="flex space-x-2">
+              <button onclick="feedbackType='good'; render()" class="flex-1 py-2 rounded-xl text-xs font-bold border transition ${feedbackType==='good' ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-300'}">👍 Good Shift</button>
+              <button onclick="feedbackType='bad'; render()" class="flex-1 py-2 rounded-xl text-xs font-bold border transition ${feedbackType==='bad' ? 'bg-red-600 text-white border-red-600' : 'bg-white text-slate-700 border-slate-300'}">👎 Issues / Bad</button>
+            </div>
+
+            ${feedbackType === 'bad' ? `
+              <div class="space-y-3 pt-2">
+                <label class="text-xs font-bold text-slate-700 block">Select Issue Chips:</label>
+                <div class="flex flex-wrap gap-2">
+                  ${['Shift Issue', 'Overtime', 'Equipment & Tools'].map(issue => `
+                    <button onclick="toggleIssue('${issue}')" class="px-3 py-1.5 rounded-lg text-xs font-bold border transition ${selectedIssues.includes(issue) ? 'bg-slate-800 text-white border-slate-800' : 'bg-slate-100 text-slate-700 border-slate-200'}">${issue}</button>
+                  `).join('')}
+                </div>
+
+                ${selectedIssues.includes('Equipment & Tools') ? `
+                  <div>
+                    <label class="text-xs font-bold text-slate-700 block mb-1">Equipment Issue:</label>
+                    <select id="eq-select" class="w-full p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium">
+                      <option>Grill Unit #2 - Temperature Fluctuation</option>
+                      <option>Combi Oven #1 - Steam Valve Error</option>
+                      <option>Dishwasher - Low Water Pressure</option>
+                    </select>
+                  </div>
+                ` : ''}
+              </div>
+            ` : ''}
+
+            <div>
+              <label class="text-xs font-bold text-slate-700 block mb-1">Comments / Details:</label>
+              <textarea id="fb-comment" rows="3" placeholder="Describe shift performance..." class="w-full p-3 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium focus:outline-none"></textarea>
+            </div>
+
+            <div class="flex items-center justify-between pt-1">
+              <span class="text-xs font-bold text-slate-700">Anonymous Mode</span>
+              <input type="checkbox" id="anon-check" ${isAnonymous ? 'checked' : ''} onchange="isAnonymous=this.checked" class="w-4 h-4 accent-emerald-600 cursor-pointer" />
+            </div>
+
+            <button onclick="submitFeedback()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white font-bold rounded-xl text-xs shadow-sm transition">Submit Shift Log</button>
+          </div>
+
+          <div class="lg:col-span-2 bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <h3 class="font-extrabold text-base text-slate-800">Shift Log History</h3>
+            <div class="space-y-3">
+              ${feedbackLogs.map(log => `
+                <div class="p-4 rounded-xl border ${log.type === 'good' ? 'bg-emerald-50/50 border-emerald-200' : 'bg-red-50/50 border-red-200'} space-y-2">
+                  <div class="flex items-center justify-between text-xs">
+                    <span class="font-bold ${log.type === 'good' ? 'text-emerald-800' : 'text-red-800'}">${log.type === 'good' ? '👍 Successful Shift' : '⚠️ Issue Reported'}</span>
+                    <span class="text-slate-500 font-medium">${log.time} • Chef: ${log.chef}</span>
+                  </div>
+                  ${log.issues && log.issues.length > 0 ? `<div class="flex gap-1">${log.issues.map(i => `<span class="bg-red-200 text-red-900 px-2 py-0.5 rounded text-[10px] font-bold">${i}</span>`).join('')}</div>` : ''}
+                  ${log.equipment ? `<div class="text-xs text-red-700 font-bold">🔧 ${log.equipment}</div>` : ''}
+                  <p class="text-xs text-slate-700 font-medium">${log.comment}</p>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    function toggleIssue(issue) {
+      if (selectedIssues.includes(issue)) {
+        selectedIssues = selectedIssues.filter(i => i !== issue);
+      } else {
+        selectedIssues.push(issue);
+      }
+      render();
+    }
+
+    function submitFeedback() {
+      const comment = document.getElementById('fb-comment').value;
+      const eqSelect = document.getElementById('eq-select');
+      const newLog = {
+        type: feedbackType,
+        issues: [...selectedIssues],
+        equipment: eqSelect ? eqSelect.value : '',
+        comment: comment || 'No comment provided.',
+        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+        chef: isAnonymous ? 'Anonymous' : 'Senior Chef'
+      };
+      feedbackLogs.unshift(newLog);
+      selectedIssues = [];
+      render();
+    }
+
+    // 5. INVENTORY VIEW
+    function renderInventory() {
+      const currentList = inventoryData[inventoryTab];
+
+      return `
+        <div class="space-y-5">
+          <div class="flex space-x-2 border-b border-slate-200 pb-3">
+            <button onclick="inventoryTab='storage'; render()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${inventoryTab==='storage'?'bg-emerald-600 text-white shadow-sm':'bg-white text-slate-600 border border-slate-200'}">📦 Dry Storage Room</button>
+            <button onclick="inventoryTab='fridge'; render()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${inventoryTab==='fridge'?'bg-emerald-600 text-white shadow-sm':'bg-white text-slate-600 border border-slate-200'}">❄️ Refrigerator</button>
+            <button onclick="inventoryTab='freezer'; render()" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition ${inventoryTab==='freezer'?'bg-emerald-600 text-white shadow-sm':'bg-white text-slate-600 border border-slate-200'}">🧊 Freezer</button>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-4">
+            <h3 class="font-extrabold text-base text-slate-800 capitalize">${inventoryTab} Inventory & FIFO Expiry Tracking</h3>
+            
+            <div class="overflow-x-auto">
+              <table class="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr class="border-b border-slate-200 text-slate-400 font-bold">
+                    <th class="py-3 px-3">Item Name</th>
+                    <th class="py-3 px-3">Quantity</th>
+                    <th class="py-3 px-3">Expiry Date (FIFO)</th>
+                    <th class="py-3 px-3">Allergens</th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-100 font-medium text-slate-700">
+                  ${currentList.map(item => {
+                    const badgeClass = item.status === 'red' ? 'bg-red-100 text-red-800 border-red-200' : item.status === 'yellow' ? 'bg-amber-100 text-amber-800 border-amber-200' : 'bg-emerald-100 text-emerald-800 border-emerald-200';
+                    return `
+                      <tr class="hover:bg-slate-50">
+                        <td class="py-3 px-3 font-bold text-slate-900">${item.name}</td>
+                        <td class="py-3 px-3">${item.qty}</td>
+                        <td class="py-3 px-3"><span class="px-2.5 py-1 rounded-full border text-[10px] font-extrabold ${badgeClass}">${item.expiry} (${item.status === 'red' ? 'Expired/Today' : item.status === 'yellow' ? 'Expiring Soon' : 'Fresh'})</span></td>
+                        <td class="py-3 px-3"><div class="flex gap-1">${item.allergens.map(a => `<span class="bg-purple-100 text-purple-800 px-2 py-0.5 rounded text-[10px] font-bold border border-purple-200">${a}</span>`).join('')}</div></td>
+                      </tr>
+                    `;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      `;
+    }
+
+    // 6. HANDOVER VIEW
+    function renderHandover() {
+      return `
+        <div class="space-y-5">
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <!-- Complaints -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+              <h4 class="font-extrabold text-sm text-slate-800 flex items-center space-x-2"><span>💬</span><span>Guest Complaints</span></h4>
+              <div class="space-y-2">
+                ${handovers.complaints.map(h => `<div class="p-3 bg-slate-50 rounded-xl border text-xs"><div class="text-slate-500 text-[10px] mb-1">${h.time} • ${h.chef}</div><p class="text-slate-800 font-medium">${h.text}</p></div>`).join('')}
+              </div>
+            </div>
+            <!-- Mistakes -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+              <h4 class="font-extrabold text-sm text-slate-800 flex items-center space-x-2"><span>⚠️</span><span>Kitchen Mistakes</span></h4>
+              <div class="space-y-2">
+                ${handovers.mistakes.map(h => `<div class="p-3 bg-red-50/50 rounded-xl border border-red-200 text-xs"><div class="text-slate-500 text-[10px] mb-1">${h.time} • ${h.chef}</div><p class="text-slate-800 font-medium">${h.text}</p></div>`).join('')}
+              </div>
+            </div>
+            <!-- Requests -->
+            <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-sm space-y-3">
+              <h4 class="font-extrabold text-sm text-slate-800 flex items-center space-x-2"><span>⭐</span><span>Special Requests</span></h4>
+              <div class="space-y-2">
+                ${handovers.requests.map(h => `<div class="p-3 bg-emerald-50/50 rounded-xl border border-emerald-200 text-xs"><div class="text-slate-500 text-[10px] mb-1">${h.time} • ${h.chef}</div><p class="text-slate-800 font-medium">${h.text}</p></div>`).join('')}
+              </div>
+            </div>
+          </div>
+
+          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm space-y-3">
+            <h3 class="font-extrabold text-base text-slate-800">Add Shift Handover Note</h3>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+              <select id="ho-cat" class="p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-bold">
+                <option value="complaints">Guest Complaint</option>
+                <option value="mistakes">Kitchen Mistake</option>
+                <option value="requests">Special Request</option>
+              </select>
+              <input type="text" id="ho-text" placeholder="Type handover note..." class="sm:col-span-2 p-2.5 bg-slate-50 border border-slate-300 rounded-xl text-xs font-medium" />
+            </div>
+            <button onclick="addHandover()" class="px-4 py-2 bg-emerald-600 text-white rounded-xl text-xs font-bold">Add Note</button>
+          </div>
+        </div>
+      `;
+    }
+
+    function addHandover() {
+      const cat = document.getElementById('ho-cat').value;
+      const text = document.getElementById('ho-text').value;
+      if (!text.trim()) return;
+      handovers[cat].unshift({ text, time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }), chef: 'Senior Duty Chef' });
+      render();
+    }
+
+    // Modal helpers
+    function openModal(type, url) {
+      const backdrop = document.getElementById('modal-backdrop');
+      const content = document.getElementById('modal-content');
+      backdrop.classList.remove('hidden');
+      backdrop.classList.add('flex');
+
+      if (type === 'photo') {
+        content.innerHTML = `
+          <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-slate-800">Photo Presentation Viewer</h3><button onclick="closeModal()" class="text-slate-500 font-bold">✕</button></div>
+          <img src="${url}" class="w-full h-72 object-cover rounded-xl border" />
+        `;
+      } else if (type === 'video') {
+        content.innerHTML = `
+          <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-slate-800">Club Sandwich SOP Video Tutorial</h3><button onclick="closeModal()" class="text-slate-500 font-bold">✕</button></div>
+          <div class="bg-black rounded-xl h-64 flex flex-col items-center justify-center text-white space-y-2">
+            <i data-lucide="play-circle" class="w-16 h-16 text-emerald-400"></i>
+            <p class="text-xs font-medium">Playing Kitchen Training Video Simulation</p>
+          </div>
+        `;
+      }
+      lucide.createIcons();
+    }
+
+    function openImagePrompt(key) {
+      const backdrop = document.getElementById('modal-backdrop');
+      const content = document.getElementById('modal-content');
+      backdrop.classList.remove('hidden');
+      backdrop.classList.add('flex');
+
+      content.innerHTML = `
+        <div class="flex justify-between items-center mb-3"><h3 class="font-bold text-slate-800">Change Presentation Image URL</h3><button onclick="closeModal()" class="text-slate-500 font-bold">✕</button></div>
+        <p class="text-xs text-slate-500 mb-3">Paste a direct image link from Unsplash or your image host below:</p>
+        <input type="text" id="new-img-url" placeholder="https://images.unsplash.com/..." class="w-full p-3 bg-slate-50 border rounded-xl text-xs mb-4" />
+        <button onclick="saveImage('${key}')" class="w-full py-2.5 bg-emerald-600 text-white rounded-xl text-xs font-bold">Update Image</button>
+      `;
+    }
+
+    function saveImage(key) {
+      const url = document.getElementById('new-img-url').value;
+      if (!url.trim()) return;
+      if (key === 'club') {
+        clubSandwichImg = url;
+      } else {
+        const item = dutyCards.find(d => d.id === key);
+        if (item) item.image = url;
+      }
+      closeModal();
+      render();
+    }
+
+    function closeModal() {
+      const backdrop = document.getElementById('modal-backdrop');
+      backdrop.classList.remove('flex');
+      backdrop.classList.add('hidden');
+    }
+
+    // Initial load
+    render();
+  </script>
+</body>
+</html>
